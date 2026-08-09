@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KENJI TYPING — 宮沢賢治のタイピングゲーム</title>
+    <meta
+      name="description"
+      content="宮沢賢治の物語・詩・オノマトペを打ちながら読む、ドット絵のタイピングゲーム。本文はすべて青空文庫のパブリックドメイン作品にもとづいています。"
+    />
+    <meta name="theme-color" content="#05070d" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="KENJI TYPING — 宮沢賢治のタイピングゲーム" />
+    <meta
+      property="og:description"
+      content="よだかの星、銀河鉄道の夜、永訣の朝、雨ニモマケズ。賢治の言葉を、一文字ずつ打つ。"
+    />
+    <meta name="twitter:card" content="summary" />
+    <!-- 外部ファイルを増やさないよう、favicon は SVG をそのまま埋め込む（夜空の星）。 -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2305070d'/%3E%3Cg fill='%239fc7ff'%3E%3Crect x='7' y='3' width='2' height='10'/%3E%3Crect x='3' y='7' width='10' height='2'/%3E%3Crect x='5' y='5' width='2' height='2'/%3E%3Crect x='9' y='9' width='2' height='2'/%3E%3Crect x='9' y='5' width='2' height='2'/%3E%3Crect x='5' y='9' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #05070d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
+      /* 仮想画面を整数倍に拡大。ピクセルをぼかさない。 */
+      #screen {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        /* ほんのりブラウン管風の縁取り */
+        box-shadow: 0 0 0 6px #0b0f1a, 0 0 40px rgba(80, 120, 160, 0.25);
+        border-radius: 4px;
+      }
+
+      /*
+        このゲームはローマ字を打つため、物理キーボードが要る。
+        タッチ主体の端末では遊べないので、崩れた画面を見せる前に理由を伝える。
+      */
+      #touch-notice {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #05070d;
+        color: #cdd7f0;
+        padding: 8vw 10vw;
+        box-sizing: border-box;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.2em;
+        line-height: 1.9;
+        text-align: center;
+      }
+      #touch-notice h1 {
+        font-size: 1.4rem;
+        color: #9fc7ff;
+        margin: 0;
+        letter-spacing: 0.08em;
+      }
+      #touch-notice p {
+        margin: 0;
+        font-size: 1rem;
+      }
+      #touch-notice small {
+        color: #6f7f9c;
+        font-size: 0.85rem;
+      }
+      #touch-notice button {
+        align-self: center;
+        margin-top: 0.4em;
+        padding: 0.7em 1.6em;
+        font: inherit;
+        color: #cdd7f0;
+        background: #10182a;
+        border: 1px solid #3a4a6a;
+        border-radius: 6px;
+      }
+      /* 細かいポインタ（マウス）が無い＝タッチ端末とみなす。 */
+      @media (pointer: coarse) and (hover: none) {
+        #touch-notice {
+          display: flex;
+        }
+        #screen {
+          display: none;
+        }
+        body.force-play #touch-notice {
+          display: none;
+        }
+        body.force-play #screen {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="screen"></canvas>
+    <div id="touch-notice">
+      <h1>KENJI TYPING</h1>
+      <p>
+        このゲームはローマ字を打って進みます。<br />
+        パソコンのキーボードで遊んでください。
+      </p>
+      <small>
+        外付けキーボードをつないだタブレットでも遊べます。<br />
+        その場合は下のボタンから開いてください。
+      </small>
+      <button type="button" id="force-play">キーボードがあるので始める</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+    <script>
+      document.getElementById("force-play").addEventListener("click", function () {
+        document.body.classList.add("force-play");
+      });
+    </script>
+  </body>
+</html>

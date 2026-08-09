@@ -1,0 +1,22 @@
+{
+  "name": "kenji-typing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "宮沢賢治タイピングゲーム KENJI TYPING（MVP: よだかの星）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:typing && npm run test:layout && npm run test:gameplay",
+    "test:typing": "node scripts/run-test.mjs typing.test.ts",
+    "test:layout": "node scripts/run-test.mjs layout.test.ts",
+    "test:gameplay": "node scripts/run-test.mjs gameplay.test.ts",
+    "typing:inspect": "node scripts/run-test.mjs inspect.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  }
+}
