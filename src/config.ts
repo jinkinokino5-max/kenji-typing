@@ -5,7 +5,8 @@
  * 空文字のあいだは「ごいけん」画面が「準備中」と表示し、フォームは開かない。
  * 発行した Googleフォームの「送信」→ リンク の URL をそのまま貼る。
  */
-export const FEEDBACK_FORM_URL = "";
+export const FEEDBACK_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLScnoMeU8Y906ecsE6FAHBw9y5On7GGHvsc2OFK_154vFCAvqw/viewform";
 
 /**
  * 編集ページ（管理者用）をホーム画面に出すかどうか。

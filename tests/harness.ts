@@ -65,6 +65,10 @@ export function makeCtx(): CanvasRenderingContext2D {
     strokeStyle: "#000",
     globalAlpha: 1,
     lineWidth: 1,
+    lineJoin: "round",
+    miterLimit: 10,
+    // 縁取りは本体の文字と同じ位置に重なるだけなので、重なり検査の対象にしない。
+    strokeText() {},
     save() {}, restore() {}, beginPath() {}, closePath() {},
     moveTo() {}, lineTo() {}, arc() {}, rect() {}, fill() {}, stroke() {}, clip() {},
     translate() {}, rotate() {}, scale() {}, setTransform() {},

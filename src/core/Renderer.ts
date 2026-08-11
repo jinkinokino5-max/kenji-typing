@@ -23,15 +23,27 @@ export class Renderer {
     window.addEventListener("resize", () => this.fit());
   }
 
-  /** ウィンドウに収まる最大の整数倍を計算し、CSSサイズへ反映。 */
+  /**
+   * ウィンドウを埋めきる倍率を計算し、CSSサイズへ反映。
+   *
+   * 以前は整数倍へ切り捨てていたが、たとえば 1920x1080 のモニタでもブラウザのUI分だけ
+   * 高さが足りず 3 倍止まりになり、画面の1/4以上が余白になっていた。
+   * そこで基本は等倍未満の端数も許し、整数倍にごく近いときだけ整数へ寄せて
+   * ドットの粒の大きさを揃える（16:9 の比は保つので上下または左右に帯は残る）。
+   */
   fit(): void {
-    const margin = 32;
-    const maxW = window.innerWidth - margin;
-    const maxH = window.innerHeight - margin;
-    const s = Math.max(1, Math.floor(Math.min(maxW / VIRTUAL_W, maxH / VIRTUAL_H)));
+    // 画面下にリンクの帯を置いたので、ウィンドウ全体ではなく置き場の大きさに合わせる。
+    const box = this.canvas.parentElement;
+    const availW = box?.clientWidth || window.innerWidth;
+    const availH = box?.clientHeight || window.innerHeight;
+    const exact = Math.min(availW / VIRTUAL_W, availH / VIRTUAL_H);
+    const near = Math.round(exact);
+    const snap = near >= 1 && Math.abs(exact - near) <= near * 0.02;
+    const s = snap ? near : Math.max(1, exact);
     this.scale = s;
-    this.canvas.style.width = `${VIRTUAL_W * s}px`;
-    this.canvas.style.height = `${VIRTUAL_H * s}px`;
+    // 小数倍のときは端をぼかさないよう、最終的なCSSピクセルは整数に丸める。
+    this.canvas.style.width = `${Math.round(VIRTUAL_W * s)}px`;
+    this.canvas.style.height = `${Math.round(VIRTUAL_H * s)}px`;
   }
 
   clear(color: string): void {

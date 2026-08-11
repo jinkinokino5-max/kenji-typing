@@ -8,6 +8,8 @@
 // ハーモニー声は常時（コンボ強度で音量が滑らかに増す）。
 // 転調・ノイズドラム・オクターブ重ねは不採用（同ドキュメント §4・§6・改訂履歴）。
 
+import { baseStoryKey } from "../data/split";
+
 export interface BgmTrack {
   key: string;
   bpm: number;
@@ -426,5 +428,6 @@ const REGISTRY: Record<string, BgmTrack> = {
 
 /** キーからトラックを得る（未定義はよだか）。 */
 export function trackByKey(key: string): BgmTrack {
-  return REGISTRY[key] ?? YODAKA_BGM;
+  // 分割章（yodaka-2 など）は原本キーのBGMを共有する。
+  return REGISTRY[key] ?? REGISTRY[baseStoryKey(key)] ?? YODAKA_BGM;
 }

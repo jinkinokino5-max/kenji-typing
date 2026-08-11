@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『グスコーブドリの伝記』（宮沢賢治／パブリックドメイン）。
 // text は青空文庫の本文から抜粋し、原文の表記のまま用いる。
@@ -46,3 +47,24 @@ export const BUDORI: Story = {
     { id: 28, text: "楽しく暮らすことができたのでした。", kana: "たのしくくらすことができたのでした" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの BUDORI_PARTS（stories.ts が参照）。
+export const BUDORI_PARTS: Story[] = splitStory(BUDORI, [
+  {
+    from: 1,
+    to: 11,
+    label: "森のきょうだい",
+  },
+  {
+    from: 12,
+    to: 19,
+    label: "火山と老技師",
+  },
+  {
+    from: 20,
+    to: 28,
+    label: "みんなの冬のために",
+    noMissBadge: "イーハトーヴの技師",
+  },
+]);

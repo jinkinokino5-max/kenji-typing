@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『永訣の朝』（詩集『春と修羅』1924／宮沢賢治・パブリックドメイン）。
 // 底本は青空文庫『春と修羅』。妹トシの死の朝を詠んだ挽歌で、全文を収録する。
@@ -72,3 +73,34 @@ export const EIKETSU: Story = {
     { id: 54, text: "わたくしのすべてのさいはひをかけてねがふ", kana: "わたくしのすべてのさいわいをかけてねがう" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの EIKETSU_PARTS（stories.ts が参照）。
+export const EIKETSU_PARTS: Story[] = splitStory(EIKETSU, [
+  {
+    from: 1,
+    to: 14,
+    label: "あめゆじゆとてちてけんじや",
+  },
+  {
+    from: 15,
+    to: 24,
+    label: "けなげないもうとよ",
+  },
+  {
+    from: 25,
+    to: 34,
+    label: "さいごのたべもの",
+  },
+  {
+    from: 35,
+    to: 46,
+    label: "けふおまへはわかれてしまふ",
+  },
+  {
+    from: 47,
+    to: 54,
+    label: "天上のアイスクリーム",
+    noMissBadge: "永訣の書き手",
+  },
+]);

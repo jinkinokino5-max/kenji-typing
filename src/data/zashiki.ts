@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『ざしき童子のはなし』（宮沢賢治／パブリックドメイン）。
 // text は青空文庫の本文から抜粋し、原文の表記のまま用いる。
@@ -41,3 +42,19 @@ export const ZASHIKI: Story = {
     { id: 23, text: "こんなのがざしきぼっこです。", kana: "こんなのがざしきぼっこです" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの ZASHIKI_PARTS（stories.ts が参照）。
+export const ZASHIKI_PARTS: Story[] = splitStory(ZASHIKI, [
+  {
+    from: 1,
+    to: 13,
+    label: "箒の音",
+  },
+  {
+    from: 14,
+    to: 23,
+    label: "大道めぐり",
+    noMissBadge: "ざしきの語り部",
+  },
+]);

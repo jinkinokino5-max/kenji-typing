@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『〔雨ニモマケズ〕』（賢治の手帳より／宮沢賢治・パブリックドメイン・青空文庫）。
 // 原文はカタカナ。text は原典どおり、kana はタイピング用のひらがな読み。
@@ -48,3 +49,24 @@ export const AMENIMO: Story = {
     { id: 30, text: "ワタシハナリタイ", kana: "わたしはなりたい" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの AMENIMO_PARTS（stories.ts が参照）。
+export const AMENIMO_PARTS: Story[] = splitStory(AMENIMO, [
+  {
+    from: 1,
+    to: 13,
+    label: "雨ニモマケズ",
+  },
+  {
+    from: 14,
+    to: 23,
+    label: "東ニ西ニ南ニ北ニ",
+  },
+  {
+    from: 24,
+    to: 30,
+    label: "デクノボー",
+    noMissBadge: "デクノボーの祈り",
+  },
+]);

@@ -1,6 +1,6 @@
 import type { Scene, SceneContext, StageOutcome } from "../core/Scene";
 import { VIRTUAL_W, VIRTUAL_H } from "../core/Renderer";
-import { shade } from "../core/Palette";
+import { mix, shade } from "../core/Palette";
 import { drawText, measureText, wrapText } from "../pixel/Text";
 import type { UnitView } from "../typing/TypingEngine";
 import { StarBurst } from "../pixel/anim/StarBurst";
@@ -24,6 +24,23 @@ const KANA_SIZE = 19;
 const KANA_LINE_H = 24;
 const GUIDE_SIZE = 11;
 const GUIDE_LINE_H = 13;
+/**
+ * 原文とかな行のあいだ／かな行とローマ字ガイドのあいだの余白。
+ * 三者は「同じ一文を別の表記で見ている」ので、視線が往復できる距離に置く。
+ */
+const STORY_GAP = 10;
+const GUIDE_GAP = 4;
+/** ブロック全体を残り領域のどこに置くか（0=上端, 0.5=中央）。やや上寄せ。 */
+const BLOCK_BIAS = 0.38;
+/** 文字ウィンドウの左右の余白と、文字ブロックとの間の余白。 */
+const BAND_PAD = 14;
+const WINDOW_PAD = 6;
+/**
+ * 文字ウィンドウに敷く暗幕の濃さ。
+ * 背景と文字が同じパレットから来るため、明るい章では文字が背景に完全に埋もれる。
+ * 実測（tools/contrast）では 0.7 で全章のコントラスト比が基準を満たす。
+ */
+const WINDOW_VEIL = 0.7;
 
 const IME_BANNER_H = 26;
 /** 開始直後だけ操作案内を出す秒数。 */
@@ -73,6 +90,8 @@ export class GameScene implements Scene {
   private finaleActive = false; // 締め演出の再生中
   private finaleTimer = 0;
   private buffer: string[] = [];
+  /** 直近フレームで描いたかな行の中心 y。演出の発生位置に使う。 */
+  private kanaY = 100;
 
   // 打鍵フィードバック
   private missKey = "";
@@ -323,9 +342,9 @@ export class GameScene implements Scene {
     if (this.paused) this.drawPauseOverlay(g);
   }
 
-  /** かな行の中心 y（演出の発生位置に使う）。 */
+  /** かな行の中心 y（演出の発生位置に使う）。描画時に実測値へ更新される。 */
   private kanaCenterY(): number {
-    return 100;
+    return this.kanaY;
   }
 
   /**
@@ -336,9 +355,17 @@ export class GameScene implements Scene {
     const p = this.theme.palette;
     const opt = ctx.state.save.options;
     const accent = this.theme.accent;
-    const dim = shade(p, opt.highContrast ? 2 : 1);
-    const mid = shade(p, opt.highContrast ? 3 : 2);
-    const bright = shade(p, 3);
+    // 文字色。背景と同じパレットから取るため、暗い階調を使うと背景へ溶ける。
+    //
+    // 以前は「打ち終えた文字ほど明るい」配色だったが、これは逆だった。
+    // 読む必要があるのは “これから打つ文字” のほうで、そこに最も暗い shade 1 を
+    // 当てていたのが可読性の主因。役目を終えた文字を落とし、これから打つ文字を
+    // いちばん明るくする。いちばん暗い階調は文字に使わず、縁取り専用にする。
+    const todo = shade(p, 3); // これから打つかな・原文
+    // 打ち終えた文字は目立たせたくないが、消えてはいけない。
+    // shade 2 をそのまま使うと暗い章で背景に沈むので、明るい側へ寄せた中間色にする。
+    const done = mix(shade(p, 2), shade(p, 3), 0.45);
+    const outline = shade(p, 0);
 
     const storyLines = wrapText(g, this.q.text, STORY_SIZE, CONTENT_W);
     const kanaLines = this.layoutKana(g);
@@ -349,23 +376,43 @@ export class GameScene implements Scene {
     const areaTop = TOP_BAR_H + 4 + topOffset;
     const areaBottom = VIRTUAL_H - BOTTOM_BAR_H - bottomReserve;
 
-    // 本文は上端に固定する（問題ごとに行数が変わっても位置が跳ねない）。
-    let y = areaTop;
+    // 原文・かな・ガイドはひとつのまとまりとして置く。
+    // 別々の基準で配置すると、問題文が短いときに原文とかなが引き離されて
+    // 視線が往復できなくなるため、間隔を固定してからブロックごと位置を決める。
+    const storyH = storyLines.length * STORY_LINE_H;
+    const kanaH = kanaLines.length * KANA_LINE_H;
+    const guideH = guideLines.length > 0 ? GUIDE_GAP + guideLines.length * GUIDE_LINE_H : 0;
+    const blockH = storyH + STORY_GAP + kanaH + guideH;
+    let y = areaTop + Math.max(0, (areaBottom - areaTop - blockH) * BLOCK_BIAS);
+
+    // 文字が乗る範囲にだけ暗幕を敷く（ゲームボーイのメッセージウィンドウ）。
+    // 画面全体を暗くすると背景アニメが死ぬので、必要な矩形だけを落とす。
+    // 縁は1pxの罫線にして、偶然の黒帯ではなく意図した枠だと分かるようにする。
+    const winX = BAND_PAD;
+    const winW = VIRTUAL_W - BAND_PAD * 2;
+    const winY = Math.round(y - WINDOW_PAD);
+    const winH = Math.round(blockH + WINDOW_PAD * 2);
+    g.globalAlpha = WINDOW_VEIL;
+    g.fillStyle = "#000000";
+    g.fillRect(winX, winY, winW, winH);
+    g.globalAlpha = 1;
+    g.fillStyle = shade(p, 1);
+    g.fillRect(winX, winY, winW, 1);
+    g.fillRect(winX, winY + winH - 1, winW, 1);
+
     for (const line of storyLines) {
       drawText(g, line, VIRTUAL_W / 2, y, {
         size: STORY_SIZE,
-        color: bright,
+        color: todo,
         align: "center",
-        shadow: shade(p, 0),
+        outline,
       });
       y += STORY_LINE_H;
     }
 
-    // かな行＋ローマ字ガイドは、本文と最下段の間に中央寄せする。
-    const blockH =
-      kanaLines.length * KANA_LINE_H +
-      (guideLines.length > 0 ? 4 + guideLines.length * GUIDE_LINE_H : 0);
-    y = Math.max(y + 6, y + 6 + (areaBottom - (y + 6) - blockH) * 0.6);
+    y += STORY_GAP;
+    // 演出（星の飛散）はかな行の位置に合わせる。
+    this.kanaY = y + kanaH / 2;
 
     const blink = Math.floor(this.t * 4) % 2 === 0;
     for (const line of kanaLines) {
@@ -373,8 +420,8 @@ export class GameScene implements Scene {
       for (const u of line.units) {
         const w = measureText(g, u.kana, KANA_SIZE, true);
         const color =
-          u.status === "done" ? bright : u.status === "current" ? (blink ? accent : mid) : dim;
-        drawText(g, u.kana, x, y, { size: KANA_SIZE, color, shadow: shade(p, 0), bold: true });
+          u.status === "done" ? done : u.status === "current" ? (blink ? accent : todo) : todo;
+        drawText(g, u.kana, x, y, { size: KANA_SIZE, color, outline, bold: true });
         if (u.status === "current") {
           g.fillStyle = accent;
           g.fillRect(Math.round(x + w / 2 - 1), y + KANA_SIZE + 1, 3, 2);
@@ -385,9 +432,9 @@ export class GameScene implements Scene {
     }
 
     if (guideLines.length > 0) {
-      y += 4;
+      y += GUIDE_GAP;
       for (const line of guideLines) {
-        this.drawGuideLine(g, line, y, { done: mid, todo: bright, cursor: accent });
+        this.drawGuideLine(g, line, y, { done, todo, cursor: accent, outline });
         y += GUIDE_LINE_H;
       }
     }
@@ -400,24 +447,26 @@ export class GameScene implements Scene {
         : `✕ ${this.missKey.toUpperCase()}`;
       drawText(g, label, VIRTUAL_W / 2, fbY, {
         size: 12,
-        color: bright,
+        color: todo,
         align: "center",
-        shadow: shade(p, 0),
+        outline,
         bold: true,
       });
     } else if (!opt.showGuide) {
       const buf = this.engine.pendingRomaji;
       drawText(g, `> ${buf}${buf ? "" : "_"}`, VIRTUAL_W / 2, fbY, {
         size: 12,
-        color: mid,
+        color: done,
+        outline,
         align: "center",
       });
     } else if (this.t < HINT_SEC) {
       // 操作案内は開始直後だけ出し、あとは画面をすっきりさせる。
       drawText(g, "Esc … ひとやすみ", VIRTUAL_W / 2, fbY, {
         size: 9,
-        color: dim,
+        color: done,
         align: "center",
+        outline,
       });
     }
   }
@@ -451,7 +500,7 @@ export class GameScene implements Scene {
     g: CanvasRenderingContext2D,
     line: GuideLine,
     y: number,
-    col: { done: string; todo: string; cursor: string },
+    col: { done: string; todo: string; cursor: string; outline: string },
   ): void {
     const total = measureText(g, line.text, GUIDE_SIZE, true);
     let x = Math.round(VIRTUAL_W / 2 - total / 2);
@@ -466,6 +515,7 @@ export class GameScene implements Scene {
       drawText(g, ch, x, y, {
         size: GUIDE_SIZE,
         color: isCursor ? "#000000" : isDone ? col.done : col.todo,
+        outline: isCursor ? undefined : col.outline,
         bold: true,
       });
       x += measureText(g, ch, GUIDE_SIZE, true);

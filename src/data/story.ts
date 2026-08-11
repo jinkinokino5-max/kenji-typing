@@ -43,4 +43,22 @@ export interface Story {
   /** 導入テキスト（数行）。 */
   intro: string[];
   questions: Question[];
+  /**
+   * 長い章を #1／#2… に分けたときの、分割元の情報（splitStory が付与）。
+   * ホーム画面はこれを見て「章をひらくと #1… が出る」表示にする。
+   */
+  part?: StoryPartRef;
+}
+
+export interface StoryPartRef {
+  /** 分割元の章キー（例: "yodaka"）。 */
+  baseKey: string;
+  /** 分割元の章題（例: "よだかの星"）。 */
+  baseTitle: string;
+  /** 小見出し（例: "みにくい鳥"）。 */
+  label: string;
+  /** 何番目の部か（1始まり）。 */
+  index: number;
+  /** 全部で何部あるか。 */
+  total: number;
 }

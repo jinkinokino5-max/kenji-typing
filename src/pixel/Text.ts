@@ -10,6 +10,13 @@ export interface TextStyle {
   align?: Align;
   /** 1pxずらしの影色（GBの縁取り風）。省略で影なし。 */
   shadow?: string;
+  /**
+   * 全方向の縁取り色。省略で縁取りなし。
+   *
+   * shadow は右下1pxにしか出ないため、明るい背景の上では文字が溶ける。
+   * 背景の色が何であっても輪郭が残るよう、文字の周囲をぐるりと囲む。
+   */
+  outline?: string;
   /** 等幅寄りの素朴なフォント。 */
   bold?: boolean;
 }
@@ -28,6 +35,13 @@ export function drawText(
   ctx.textBaseline = "top";
   ctx.textAlign = style.align ?? "left";
   ctx.font = `${style.bold ? "bold " : ""}${style.size}px ${FONT_STACK}`;
+  if (style.outline) {
+    ctx.strokeStyle = style.outline;
+    ctx.lineWidth = 2; // 中心線基準なので、外側へ約1px出る
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+    ctx.strokeText(text, x, y);
+  }
   if (style.shadow) {
     ctx.fillStyle = style.shadow;
     ctx.fillText(text, x + 1, y + 1);

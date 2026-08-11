@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『〔風がおもてで呼んでゐる〕』（宮沢賢治／パブリックドメイン・青空文庫）。
 // 病床の賢治を、外から風が呼ぶ一篇。全文を収録する。
@@ -36,3 +37,19 @@ export const KAZEOMOTE: Story = {
     { id: 18, text: "風がおもてで叫んでゐる", kana: "かぜがおもてでさけんでゐる" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの KAZEOMOTE_PARTS（stories.ts が参照）。
+export const KAZEOMOTE_PARTS: Story[] = splitStory(KAZEOMOTE, [
+  {
+    from: 1,
+    to: 9,
+    label: "おもてへ出て来るんだ",
+  },
+  {
+    from: 10,
+    to: 18,
+    label: "約束通り",
+    noMissBadge: "風の呼び声",
+  },
+]);

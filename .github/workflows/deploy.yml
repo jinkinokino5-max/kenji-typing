@@ -27,6 +27,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # 読み物ページの文言を変えたのに再生成を忘れても、公開版では字が欠けないよう
+      # ここでサブセットを作り直す。
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install fonttools brotli
+      - run: npm run build:font
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

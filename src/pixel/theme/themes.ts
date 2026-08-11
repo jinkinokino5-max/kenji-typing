@@ -5,6 +5,7 @@ import {
   KOKUBETSU_P, SEITO_P, YORU_P, MIZUKUMI_P, shade,
 } from "../../core/Palette";
 import type { SceneTheme } from "./SceneTheme";
+import { baseStoryKey } from "../../data/split";
 import { YodakaBackdrop } from "../anim/YodakaBackdrop";
 import { GingaBackdrop } from "../anim/GingaBackdrop";
 import { BudoriBackdrop } from "../anim/BudoriBackdrop";
@@ -88,7 +89,7 @@ export const GINGA_THEME: SceneTheme = {
 export const BUDORI_THEME: SceneTheme = {
   key: "budori",
   palette: VOLCANO,
-  accent: "#ff7a2a",
+  accent: "#ffa055",
   bgmKey: "budori",
   makeBackdrop: () => new BudoriBackdrop(),
   drawMeter(g, progress, t) {
@@ -185,7 +186,7 @@ export const ONO_THEME: SceneTheme = {
 export const EIKETSU_THEME: SceneTheme = {
   key: "eiketsu",
   palette: SLEET,
-  accent: "#e6a6a6",
+  accent: "#f6c8c8",
   bgmKey: "eiketsu",
   makeBackdrop: () => new EiketsuBackdrop(),
   drawMeter(g, progress, t) {
@@ -259,7 +260,7 @@ export const HARUSHURA_THEME: SceneTheme = {
 export const AOMORI_THEME: SceneTheme = {
   key: "aomori",
   palette: AQUA,
-  accent: "#ff6a5a",
+  accent: "#ffb5a6",
   bgmKey: "aomori",
   makeBackdrop: () => new AomoriBackdrop(),
   drawMeter(g, progress, t) {
@@ -594,5 +595,6 @@ const REGISTRY: Record<string, SceneTheme> = {
 };
 
 export function themeForStory(key: string): SceneTheme {
-  return REGISTRY[key] ?? YODAKA_THEME;
+  // 分割章（yodaka-2 など）は原本キーのテーマを共有する。
+  return REGISTRY[key] ?? REGISTRY[baseStoryKey(key)] ?? YODAKA_THEME;
 }

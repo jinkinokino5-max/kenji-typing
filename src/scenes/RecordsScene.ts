@@ -5,34 +5,63 @@ import { NightBackdrop } from "../pixel/NightBackdrop";
 import { drawText, fitText, measureText } from "../pixel/Text";
 import { levelOf, weakKeyRanking } from "../core/Storage";
 import { EDITIONS } from "../data/stories";
-import type { Story } from "../data/story";
+import { groupStories, type StoryGroup } from "../data/split";
 import { HomeScene } from "./HomeScene";
 
 // きろく画面：レベル・KP・作品別ランク（編ごと）・苦手キー・獲得バッジ。
 
 /** 1カラムに積む行（見出し or 作品）。 */
-type Row = { kind: "head"; label: string } | { kind: "story"; story: Story };
+type Row = { kind: "head"; label: string } | { kind: "story"; group: StoryGroup };
 
 const COL_X = [8, 168, 328];
 const COL_W = 144;
 const LINE_H = 13;
 const LIST_TOP = 60;
 
-/** 章が多い詩歌編は2カラムに割り、画面外へはみ出さないようにする。 */
+/** 1カラムに積める行数（下の「◆ 苦手キー」にぶつからない範囲）。 */
+const CAP = Math.floor((VIRTUAL_H - 56 - LIST_TOP) / LINE_H);
+
+/**
+ * 編ごとの行（見出し＋章）を3カラムへ詰める。
+ * ・現在のカラムに丸ごと入らない編は、次のカラムから始める。
+ * ・1カラムに収まらない編だけ (1)(2) … と分割して続ける。
+ * 章の分割（#1／#2…）で章数が増えても、画面外へはみ出さないようにするため
+ * 固定の割り付けはせず、その時々の章数から組み立てる。
+ */
 function buildColumns(): Row[][] {
-  const [story, poem, special] = EDITIONS;
   const cols: Row[][] = [[], [], []];
-  cols[0].push({ kind: "head", label: story.label });
-  for (const s of story.stories) cols[0].push({ kind: "story", story: s });
-  if (special) {
-    cols[0].push({ kind: "head", label: special.label });
-    for (const s of special.stories) cols[0].push({ kind: "story", story: s });
+  const heads: { row: { kind: "head"; label: string }; base: string; piece: number }[] = [];
+  let ci = 0;
+  for (const ed of EDITIONS) {
+    const rest = groupStories(ed.stories);
+    let piece = 0;
+    while (rest.length > 0) {
+      const last = ci >= cols.length - 1;
+      const room = CAP - cols[ci].length - 1; // 見出し1行を除いた余り
+      // 丸ごと入らないなら次のカラムへ送る（先頭が空のときは送らない）。
+      if (piece === 0 && room < rest.length && cols[ci].length > 0 && !last) {
+        ci++;
+        continue;
+      }
+      if (room <= 0 && !last) {
+        ci++;
+        continue;
+      }
+      const take = last ? rest.splice(0) : rest.splice(0, Math.max(room, 1));
+      piece++;
+      const head = { kind: "head" as const, label: ed.label };
+      heads.push({ row: head, base: ed.label, piece });
+      cols[ci].push(head);
+      for (const gp of take) cols[ci].push({ kind: "story", group: gp });
+      if (rest.length > 0) ci++;
+    }
   }
-  const half = Math.ceil(poem.stories.length / 2);
-  cols[1].push({ kind: "head", label: `${poem.label} (1)` });
-  for (const s of poem.stories.slice(0, half)) cols[1].push({ kind: "story", story: s });
-  cols[2].push({ kind: "head", label: `${poem.label} (2)` });
-  for (const s of poem.stories.slice(half)) cols[2].push({ kind: "story", story: s });
+  // 分割された編にだけ (1)(2) を付ける。
+  const total = new Map<string, number>();
+  for (const h of heads) total.set(h.base, Math.max(total.get(h.base) ?? 0, h.piece));
+  for (const h of heads) {
+    if ((total.get(h.base) ?? 1) > 1) h.row.label = `${h.base} (${h.piece})`;
+  }
   return cols;
 }
 
@@ -84,17 +113,25 @@ export class RecordsScene implements Scene {
             shadow: shade(NIGHT, 0),
           });
         } else {
-          const rec = s.perStory[row.story.key];
-          const right = rec ? `${rec.rank} ${rec.readRate}%` : "未挑戦";
+          // 分割章は「#1…をいくつ終えたか」でまとめて1行に出す。
+          const gp = row.group;
+          const done = gp.parts.filter((p) => s.perStory[p.key]).length;
+          const rec = gp.split ? undefined : s.perStory[gp.parts[0].key];
+          const right = gp.split
+            ? `${done}/${gp.parts.length}`
+            : rec
+              ? `${rec.rank} ${rec.readRate}%`
+              : "未挑戦";
+          const hasRec = gp.split ? done > 0 : !!rec;
           // 長い章題はランク表示にぶつかる前で切り詰める。
           const avail = COL_W - 6 - measureText(g, right, 10) - 4;
-          drawText(g, fitText(g, row.story.title, 10, avail), x + 6, y, {
+          drawText(g, fitText(g, gp.title, 10, avail), x + 6, y, {
             size: 10,
             color: shade(NIGHT, 3),
           });
           drawText(g, right, x + COL_W, y, {
             size: 10,
-            color: rec ? shade(NIGHT, 3) : shade(NIGHT, 1),
+            color: hasRec ? shade(NIGHT, 3) : shade(NIGHT, 1),
             align: "right",
           });
         }

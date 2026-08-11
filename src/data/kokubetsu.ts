@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『告別』（詩集『春と修羅　第二集』所収／パブリックドメイン・青空文庫）。
 // 音楽の才に恵まれた教え子へ贈る、賢治の別れの言葉。全文を収録する。
@@ -75,3 +76,39 @@ export const KOKUBETSU: Story = {
     { id: 53, text: "光でできたパイプオルガンを弾くがいゝ", kana: "ひかりでできたぱいぷおるがんをひくがいい" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの KOKUBETSU_PARTS（stories.ts が参照）。
+export const KOKUBETSU_PARTS: Story[] = splitStory(KOKUBETSU, [
+  {
+    from: 1,
+    to: 9,
+    label: "バスの三連音",
+  },
+  {
+    from: 10,
+    to: 19,
+    label: "幼齢の楽人たち",
+  },
+  {
+    from: 20,
+    to: 29,
+    label: "才はとゞまらぬ",
+  },
+  {
+    from: 30,
+    to: 37,
+    label: "おれはおまへをもう見ない",
+  },
+  {
+    from: 38,
+    to: 46,
+    label: "よくきいてくれ",
+  },
+  {
+    from: 47,
+    to: 53,
+    label: "光でできたパイプオルガン",
+    noMissBadge: "光のパイプオルガン",
+  },
+]);

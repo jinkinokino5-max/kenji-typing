@@ -6,18 +6,27 @@ import { drawText } from "../pixel/Text";
 import { drawYodaka, flapFrame } from "../pixel/anim/Yodaka";
 import { levelOf } from "../core/Storage";
 import { EDITIONS, editionOfStory } from "../data/stories";
+import type { Story } from "../data/story";
+import { groupStories } from "../data/split";
 import { IntroScene } from "./IntroScene";
 import { RecordsScene } from "./RecordsScene";
 import { SettingsScene } from "./SettingsScene";
 import { HowToScene } from "./HowToScene";
 import { AdminGateScene } from "./AdminGateScene";
 import { FeedbackScene } from "./FeedbackScene";
+import { GateScene } from "./GateScene";
 import { editModeEnabled } from "../config";
 import { trackByKey } from "../audio/tracks";
 
 type Zone = "chapter" | "feature";
+
+// 章リストの1行。分割章は「章（group）」を開くと「部（part）」が下にぶら下がる。
+type Row =
+  | { kind: "story"; story: Story }
+  | { kind: "group"; baseKey: string; title: string; chapter: string; parts: Story[] }
+  | { kind: "part"; story: Story };
 // 「編集」は一般公開の画面には出さない。URL に ?edit=1 が付いたときだけ現れる。
-const FEATURES: string[] = ["きろく", "せってい", "あそびかた", "ごいけん"];
+const FEATURES: string[] = ["きろく", "せってい", "あそびかた", "ごいけん", "このほしについて"];
 if (editModeEnabled()) FEATURES.push("編集");
 const PER_ROW = 3;
 const COMING = "宮沢賢治の作品を、少しずつ増やしていきます";
@@ -29,9 +38,11 @@ export class HomeScene implements Scene {
   private t = 0;
   private zone: Zone = "chapter";
   private ei = 0; // 編インデックス
-  private ci = 0; // 編内の章インデックス
+  private ci = 0; // 編内の行インデックス（章行＋展開された部の行）
   private fi = 0; // 機能インデックス
   private scroll = 0; // 章リストのスクロール位置（先頭行）
+  // 展開中の分割章（1つだけ。別の章を開くと前の章は自動的に閉じる）。
+  private expanded: string | null = null;
 
   private readonly listTop = 66;
   private readonly rowH = 19;
@@ -46,12 +57,35 @@ export class HomeScene implements Scene {
     const ed = editionOfStory(initialStoryKey);
     if (!ed) return;
     this.ei = EDITIONS.indexOf(ed);
-    const idx = ed.stories.findIndex((s) => s.key === initialStoryKey);
+    // 分割章から戻ってきたときは、その章を開いた状態で該当の部へ合わせる。
+    const target = ed.stories.find((s) => s.key === initialStoryKey);
+    if (target?.part) this.expanded = target.part.baseKey;
+    const idx = this.rows.findIndex(
+      (r) => r.kind !== "group" && r.story.key === initialStoryKey,
+    );
     if (idx >= 0) this.ci = idx;
   }
 
-  private get stories() {
-    return EDITIONS[this.ei].stories;
+  /** 現在の編の表示行（展開状態を反映）。 */
+  private get rows(): Row[] {
+    const out: Row[] = [];
+    for (const gp of groupStories(EDITIONS[this.ei].stories)) {
+      if (!gp.split) {
+        out.push({ kind: "story", story: gp.parts[0] });
+        continue;
+      }
+      out.push({
+        kind: "group",
+        baseKey: gp.baseKey,
+        title: gp.title,
+        chapter: gp.chapter,
+        parts: gp.parts,
+      });
+      if (this.expanded === gp.baseKey) {
+        for (const p of gp.parts) out.push({ kind: "part", story: p });
+      }
+    }
+    return out;
   }
 
   enter(ctx: SceneContext): void {
@@ -63,7 +97,7 @@ export class HomeScene implements Scene {
     this.t += dt;
     this.bg.update(dt, 0);
     const inp = ctx.input;
-    const list = this.stories;
+    const list = this.rows;
 
     if (inp.wasPressed("ArrowUp")) {
       if (this.zone === "feature") {
@@ -87,6 +121,7 @@ export class HomeScene implements Scene {
         this.ei = (this.ei - 1 + EDITIONS.length) % EDITIONS.length;
         this.ci = 0;
         this.scroll = 0;
+        this.expanded = null;
       } else {
         this.fi = Math.max(0, this.fi - 1);
       }
@@ -95,6 +130,7 @@ export class HomeScene implements Scene {
         this.ei = (this.ei + 1) % EDITIONS.length;
         this.ci = 0;
         this.scroll = 0;
+        this.expanded = null;
       } else {
         this.fi = Math.min(FEATURES.length - 1, this.fi + 1);
       }
@@ -109,12 +145,20 @@ export class HomeScene implements Scene {
 
   private select(ctx: SceneContext): void {
     if (this.zone === "chapter") {
-      ctx.go(new IntroScene(this.stories[this.ci]));
+      const row = this.rows[this.ci];
+      if (!row) return;
+      if (row.kind === "group") {
+        // 開いていた別の章は閉じ、この章だけを開く（同じ章なら閉じる）。
+        this.expanded = this.expanded === row.baseKey ? null : row.baseKey;
+        return;
+      }
+      ctx.go(new IntroScene(row.story));
     } else {
       if (this.fi === 0) ctx.go(new RecordsScene());
       else if (this.fi === 1) ctx.go(new SettingsScene());
       else if (this.fi === 2) ctx.go(new HowToScene());
       else if (this.fi === 3) ctx.go(new FeedbackScene());
+      else if (this.fi === 4) ctx.go(new GateScene());
       else ctx.go(new AdminGateScene());
     }
   }
@@ -149,32 +193,67 @@ export class HomeScene implements Scene {
     });
 
     // 章一覧（駅めぐり）— visibleRows ぶんの窓をスクロール表示
-    const winStories = this.stories.slice(this.scroll, this.scroll + this.visibleRows);
-    winStories.forEach((s, row) => {
-      const i = this.scroll + row;
-      const y = this.listTop + row * this.rowH;
+    const rows = this.rows;
+    const win = rows.slice(this.scroll, this.scroll + this.visibleRows);
+    win.forEach((row, ri) => {
+      const i = this.scroll + ri;
+      const y = this.listTop + ri * this.rowH;
       const selected = this.zone === "chapter" && this.ci === i;
-      const rec = save.perStory[s.key];
+      // 分割章の見出し行は、部がすべて記録済みなら「クリア済み」扱いにする。
+      const rec = row.kind === "group" ? undefined : save.perStory[row.story.key];
+      const done =
+        row.kind === "group" ? row.parts.filter((p) => save.perStory[p.key]).length : 0;
+      const cleared = row.kind === "group" ? done === row.parts.length : !!rec;
+      const indent = row.kind === "part" ? 16 : 0;
       if (selected) {
         g.fillStyle = shade(NIGHT, 1);
-        g.fillRect(40, y - 2, VIRTUAL_W - 80, this.rowH - 2);
-        drawYodaka(g, 34, y + 6, flapFrame(this.t, 8), NIGHT, 2, 3);
+        g.fillRect(40 + indent, y - 2, VIRTUAL_W - 80 - indent, this.rowH - 2);
+        drawYodaka(g, 34 + indent, y + 6, flapFrame(this.t, 8), NIGHT, 2, 3);
       }
-      const main = selected ? this.accent() : shade(NIGHT, rec ? 3 : 2);
+      const main = selected ? this.accent() : shade(NIGHT, cleared ? 3 : 2);
+
+      if (row.kind === "group") {
+        // 開閉マーク（▼＝ひらいている／▶＝とじている）
+        drawText(g, this.expanded === row.baseKey ? "▼" : "▶", 48, y + 1, {
+          size: 9,
+          color: selected ? this.accent() : shade(NIGHT, 2),
+        });
+        drawText(g, `${row.chapter}  ${row.title}`, 62, y, {
+          size: 13,
+          color: main,
+          shadow: shade(NIGHT, 0),
+        });
+        drawText(g, "★".repeat(row.parts[0].difficulty), 300, y + 1, {
+          size: 10,
+          color: shade(NIGHT, 2),
+        });
+        drawText(g, `${done}/${row.parts.length}`, 388, y, {
+          size: 12,
+          color: main,
+          align: "right",
+        });
+        return;
+      }
+
+      const s = row.story;
       g.fillStyle = rec ? "#9fc7ff" : shade(NIGHT, 2);
       if (rec) {
-        g.fillRect(50, y + 6, 3, 1);
-        g.fillRect(51, y + 4, 1, 5);
-        g.fillRect(49, y + 5, 5, 1);
+        g.fillRect(50 + indent, y + 6, 3, 1);
+        g.fillRect(51 + indent, y + 4, 1, 5);
+        g.fillRect(49 + indent, y + 5, 5, 1);
       } else {
-        g.fillRect(50, y + 5, 3, 3);
+        g.fillRect(50 + indent, y + 5, 3, 3);
       }
-      drawText(g, `${s.chapter}  ${s.title}`, 62, y, {
+      // 展開された部は「#1  みにくい鳥」、通常章は「第一章  題名」。
+      const label = s.part
+        ? `#${s.part.index}  ${s.part.label}`
+        : `${s.chapter}  ${s.title}`;
+      drawText(g, label, 62 + indent, y, {
         size: 13,
         color: main,
         shadow: shade(NIGHT, 0),
       });
-      drawText(g, "★".repeat(s.difficulty), 300, y + 1, {
+      drawText(g, s.part ? `${s.questions.length}もん` : "★".repeat(s.difficulty), 300, y + 1, {
         size: 10,
         color: shade(NIGHT, 2),
       });
@@ -198,7 +277,7 @@ export class HomeScene implements Scene {
         align: "center",
       });
     }
-    if (this.scroll + this.visibleRows < this.stories.length) {
+    if (this.scroll + this.visibleRows < rows.length) {
       drawText(g, "▼", VIRTUAL_W / 2, this.listTop + this.visibleRows * this.rowH - 3, {
         size: 9,
         color: shade(NIGHT, 2),
@@ -207,7 +286,7 @@ export class HomeScene implements Scene {
     }
 
     // 区切り（窓の表示行数ぶんで固定＝章が増えても下部レイアウトは不動）
-    const sepY = this.listTop + Math.min(this.stories.length, this.visibleRows) * this.rowH + 8;
+    const sepY = this.listTop + Math.min(rows.length, this.visibleRows) * this.rowH + 8;
     g.fillStyle = shade(NIGHT, 1);
     g.fillRect(40, sepY, VIRTUAL_W - 80, 1);
 
@@ -231,8 +310,8 @@ export class HomeScene implements Scene {
         shadow: shade(NIGHT, 0),
       });
     });
-    const rows = Math.ceil(FEATURES.length / PER_ROW);
-    drawText(g, COMING, VIRTUAL_W / 2, fy + rows * rowGap + 2, {
+    const featureRows = Math.ceil(FEATURES.length / PER_ROW);
+    drawText(g, COMING, VIRTUAL_W / 2, fy + featureRows * rowGap + 2, {
       size: 10,
       color: shade(NIGHT, 1),
       align: "center",

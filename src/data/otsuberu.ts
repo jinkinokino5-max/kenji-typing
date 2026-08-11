@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『オツベルと象』（宮沢賢治／パブリックドメイン）。
 // text は青空文庫の本文から抜粋し、原文の表記のまま用いる。
@@ -48,3 +49,24 @@ export const OTSUBERU: Story = {
     { id: 30, text: "白象はさびしくわらってそう云った。", kana: "はくぞうはさびしくわらってそういった" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの OTSUBERU_PARTS（stories.ts が参照）。
+export const OTSUBERU_PARTS: Story[] = splitStory(OTSUBERU, [
+  {
+    from: 1,
+    to: 12,
+    label: "オツベルの小屋",
+  },
+  {
+    from: 13,
+    to: 19,
+    label: "サンタマリア",
+  },
+  {
+    from: 20,
+    to: 30,
+    label: "なだれ込む象",
+    noMissBadge: "白象の友",
+  },
+]);

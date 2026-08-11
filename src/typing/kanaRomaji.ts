@@ -87,6 +87,9 @@ const DIGRAPH: Record<string, string[]> = {
   くぁ: ["qa", "qwa"], くぃ: ["qi", "qwi"], くぇ: ["qe", "qwe"], くぉ: ["qo", "qwo"],
   ぐぁ: ["gwa"], つぁ: ["tsa"], つぃ: ["tsi"], つぇ: ["tse"], つぉ: ["tso"],
   いぇ: ["ye"],
+  // 合拗音（小書きの「ゎ」）。これが無いと「ぐゎあ」を gu + lwa と分けるしかなく、
+  // 素直な gwa が弾かれてしまう。
+  くゎ: ["kwa", "qwa"], ぐゎ: ["gwa"],
 };
 
 // 記号・約物。かな欄に記号を含めても打てるようにする。
@@ -149,6 +152,20 @@ const COLLOQUIAL_MONO: Record<string, string[]> = {
   ぢ: ["ji", "zi"],
   づ: ["zu"],
   ゔ: ["bu"],
+};
+
+/**
+ * 拗音レベルの口語読み（2かなを消費して追加受理する）。
+ *
+ * COLLOQUIAL_MONO は1かなぶんの辺しか作らないため、「ぢゃ」は
+ * 「ぢ(→ji) + ゃ(→lya)」＝ jilya という不自然な打ち方しか残らなかった。
+ * 現代表記の「じゃ」と同じ ja / zya で打てるよう、ここで2かなの辺を足す。
+ * 合拗音（くゎ→ka、ぐゎ→ga）も同じ理由で口語読みを認める。
+ */
+const COLLOQUIAL_DIGRAPH: Record<string, string[]> = {
+  ぢゃ: ["ja", "jya", "zya"], ぢゅ: ["ju", "jyu", "zyu"],
+  ぢぇ: ["je", "jye", "zye"], ぢょ: ["jo", "jyo", "zyo"],
+  くゎ: ["ka", "ca"], ぐゎ: ["ga"],
 };
 
 function uniq(a: string[]): string[] {
@@ -268,6 +285,10 @@ export function buildGraph(kana: string): Edge[][] {
 
     // 歴史的仮名遣いの口語読み。
     for (const e of historicalEdges(kana, i)) edges.push(e);
+    const two2 = kana.substr(i, 2);
+    if (two2.length === 2 && COLLOQUIAL_DIGRAPH[two2]) {
+      edges.push({ len: 2, romaji: COLLOQUIAL_DIGRAPH[two2], alt: true });
+    }
     const mono = COLLOQUIAL_MONO[c];
     if (mono) edges.push({ len: 1, romaji: mono, alt: true });
     // 語中のハ行転呼（あはれ→aware、まへ→mae、おもふ→omou）。

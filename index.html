@@ -6,7 +6,7 @@
     <title>KENJI TYPING — 宮沢賢治のタイピングゲーム</title>
     <meta
       name="description"
-      content="宮沢賢治の物語・詩・オノマトペを打ちながら読む、ドット絵のタイピングゲーム。本文はすべて青空文庫のパブリックドメイン作品にもとづいています。"
+      content="宮沢賢治の童話・詩・オノマトペを打ちながら読む、無料のドット絵タイピングゲーム。よだかの星、銀河鉄道の夜、永訣の朝など全24章。ブラウザだけで遊べます。"
     />
     <meta name="theme-color" content="#05070d" />
     <meta property="og:type" content="website" />
@@ -16,6 +16,25 @@
       content="よだかの星、銀河鉄道の夜、永訣の朝、雨ニモマケズ。賢治の言葉を、一文字ずつ打つ。"
     />
     <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="https://jinkinokino5-max.github.io/kenji-typing/" />
+    <!--
+      アクセス解析（GA4）。ローカル開発（localhost）の打鍵で数字が汚れないよう、
+      公開ホストのときだけタグを読み込む。
+    -->
+    <script>
+      if (location.hostname.endsWith("github.io")) {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", "G-GXL66ZGTE2");
+        var s = document.createElement("script");
+        s.async = true;
+        s.src = "https://www.googletagmanager.com/gtag/js?id=G-GXL66ZGTE2";
+        document.head.appendChild(s);
+      }
+    </script>
     <!-- 外部ファイルを増やさないよう、favicon は SVG をそのまま埋め込む（夜空の星）。 -->
     <link
       rel="icon"
@@ -31,18 +50,70 @@
         height: 100%;
         background: #05070d;
         display: flex;
+        flex-direction: column;
+        /* stretch のままにする。center にすると子が内容幅に縮み、
+           ゲーム画面が横いっぱいまで広がらない。中央寄せは #stage 側で行う。 */
+        align-items: stretch;
+        overflow: hidden;
+        font-family: "DotGothic16", "MS Gothic", monospace;
+      }
+      /* ゲーム画面の置き場。残りの高さをすべて使う。 */
+      #stage {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
-        font-family: sans-serif;
       }
-      /* 仮想画面を整数倍に拡大。ピクセルをぼかさない。 */
+      /* 画面下の帯。ゲームのステータスバーと同じ高さ・同じ罫線。 */
+      #ground {
+        flex: 0 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 12px 8px;
+        background: #0b0f1a;
+        border-top: 2px solid #22304a;
+        color: #6f7f9c;
+        font-size: 16px;
+        line-height: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 16px;
+        justify-content: center;
+      }
+      #ground h1 {
+        font-size: 16px;
+        font-weight: normal;
+        margin: 0;
+        color: #9fc7ff;
+        letter-spacing: 0.06em;
+      }
+      #ground nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 16px;
+      }
+      #ground a {
+        color: #6f7f9c;
+        text-decoration: none;
+      }
+      #ground a:hover,
+      #ground a:focus-visible {
+        color: #9fc7ff;
+        outline: none;
+      }
+      /*
+        仮想画面をウィンドウいっぱいまで拡大。ピクセルをぼかさない。
+        画面を埋めきる倍率になったため、以前の 6px の枠は上下が切れて
+        中途半端に見える。枠はやめ、まわりのほのかな光だけ残す。
+      */
       #screen {
         image-rendering: pixelated;
         image-rendering: crisp-edges;
-        /* ほんのりブラウン管風の縁取り */
-        box-shadow: 0 0 0 6px #0b0f1a, 0 0 40px rgba(80, 120, 160, 0.25);
-        border-radius: 4px;
+        box-shadow: 0 0 40px rgba(80, 120, 160, 0.25);
+        display: block;
       }
 
       /*
@@ -105,7 +176,7 @@
     </style>
   </head>
   <body>
-    <canvas id="screen"></canvas>
+    <main id="stage"><canvas id="screen"></canvas></main>
     <div id="touch-notice">
       <h1>KENJI TYPING</h1>
       <p>
@@ -118,6 +189,22 @@
       </small>
       <button type="button" id="force-play">キーボードがあるので始める</button>
     </div>
+    <!--
+      ゲームは Canvas なのでテキストが残らない。検索エンジンにも利用者にも
+      たどれる導線が要るので、画面下にドット罫線の細い帯をひとつだけ置く。
+      ゲーム内のステータスバーと同じ造形なので、世界観は壊れない。
+    -->
+    <footer id="ground">
+      <h1>KENJI TYPING｜宮沢賢治のタイピングゲーム</h1>
+      <nav>
+        <a href="./how-to-play/">遊び方</a>
+        <a href="./tips/">打ち方のコツ</a>
+        <a href="./works/">収録作品</a>
+        <a href="./about/">運営者について</a>
+        <a href="./contact/">お問い合わせ</a>
+        <a href="./privacy/">プライバシーポリシー</a>
+      </nav>
+    </footer>
     <script type="module" src="/src/main.ts"></script>
     <script>
       document.getElementById("force-play").addEventListener("click", function () {

@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『青森挽歌』（詩集『春と修羅』1924／宮沢賢治・パブリックドメイン・青空文庫）。
 // 妹トシの死のあと、樺太へ向かう夜汽車で書かれた長篇の挽歌。
@@ -53,3 +54,29 @@ export const AOMORI: Story = {
     { id: 33, text: "ああ　わたくしはけつしてさうしませんでした", kana: "ああわたくしはけつしてさうしませんでした" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの AOMORI_PARTS（stories.ts が参照）。
+export const AOMORI_PARTS: Story[] = splitStory(AOMORI, [
+  {
+    from: 1,
+    to: 8,
+    label: "水族館の窓",
+  },
+  {
+    from: 9,
+    to: 16,
+    label: "駅長のかげもない",
+  },
+  {
+    from: 17,
+    to: 25,
+    label: "いもうとの死顔",
+  },
+  {
+    from: 26,
+    to: 33,
+    label: "むかしからのきやうだい",
+    noMissBadge: "銀河系の玲瓏レンズ",
+  },
+]);

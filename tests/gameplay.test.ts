@@ -44,7 +44,7 @@ function playStory(storyKey: string, opts = { ...DEFAULT_OPTIONS }) {
 
 // ---- 1章まるごと通しプレイ ----
 {
-  const { h, story } = playStory("yodaka");
+  const { h, story } = playStory("yodaka-1");
   const out = (h.ctx.state as { lastOutcome: Record<string, unknown> | null }).lastOutcome;
   check("通しプレイ: リザルトへ遷移した", h.lastScene() instanceof ResultScene);
   check("通しプレイ: 成績が記録された", out !== null);
@@ -64,14 +64,14 @@ function playStory(storyKey: string, opts = { ...DEFAULT_OPTIONS }) {
 
 // ---- 詩歌編（締め演出あり）でも完走できる ----
 {
-  const { h } = playStory("eiketsu");
+  const { h } = playStory("eiketsu-1");
   check("詩歌編も完走してリザルトへ", h.lastScene() instanceof ResultScene);
 }
 
 // ---- 「問 n/N」が総数を超えない（締め演出中も含む） ----
 // 最終問題を解き終えると内部カウンタは総数に達する。締め演出は
 // その間も描画されるため、表示だけは総数で止める必要がある。
-for (const key of ["yodaka", "eiketsu"]) {
+for (const key of ["yodaka-1", "eiketsu-1"]) {
   const story = storyByKey(key)!;
   const h = makeHarness({ ...DEFAULT_OPTIONS });
   const gs = new GameScene(story);
@@ -227,6 +227,36 @@ for (const key of ["yodaka", "eiketsu"]) {
     engine.correctKeys === 3 && engine.mistakes === 0,
     `correct=${engine.correctKeys} miss=${engine.mistakes}`,
   );
+}
+
+// ---- 章の分割（#1／#2…）が破綻していないこと ----
+{
+  // 1回のプレイが長くなりすぎないための上限。超えたら分割を見直す。
+  const LONGEST = 15;
+  const tooLong = STORIES.filter((s) => s.questions.length > LONGEST);
+  check(
+    `どの章も${LONGEST}問以下`,
+    tooLong.length === 0,
+    tooLong.map((s) => `${s.title}=${s.questions.length}`).join(" / "),
+  );
+
+  // 分割章は #1 から連番で、問題の重複・抜けがないこと。
+  const byBase = new Map<string, typeof STORIES>();
+  for (const s of STORIES) {
+    if (!s.part) continue;
+    const cur = byBase.get(s.part.baseKey) ?? [];
+    cur.push(s);
+    byBase.set(s.part.baseKey, cur);
+  }
+  const broken: string[] = [];
+  for (const [base, parts] of byBase) {
+    const okIndex = parts.every((p, i) => p.part?.index === i + 1);
+    const okTotal = parts.every((p) => p.part?.total === parts.length);
+    const okId = parts.every((p) => p.questions.every((q, i) => q.id === i + 1));
+    const okLabel = parts.every((p) => (p.part?.label ?? "").length > 0);
+    if (!okIndex || !okTotal || !okId || !okLabel) broken.push(base);
+  }
+  check("分割章の通し番号・小見出し・問題idが正しい", broken.length === 0, broken.join(" / "));
 }
 
 report("プレイ通し検証");

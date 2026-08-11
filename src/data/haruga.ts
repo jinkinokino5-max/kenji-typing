@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『一〇一五　〔わたくしの汲みあげるバケツが〕』（宮沢賢治／パブリックドメイン・青空文庫）。
 // 井戸のバケツに落ちた春の蛾を掬いだす一篇。全文を収録する。
@@ -39,3 +40,19 @@ export const HARUGA: Story = {
     { id: 19, text: "不定形な雲の間を航行する", kana: "ふていけいなくものあいだをこうこうする" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの HARUGA_PARTS（stories.ts が参照）。
+export const HARUGA_PARTS: Story[] = splitStory(HARUGA, [
+  {
+    from: 1,
+    to: 9,
+    label: "井戸のバケツ",
+  },
+  {
+    from: 10,
+    to: 19,
+    label: "飛び立つ　飛び立つ",
+    noMissBadge: "春への突進者",
+  },
+]);

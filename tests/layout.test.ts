@@ -177,6 +177,20 @@ inspect("ごいけん", new FeedbackScene(), makeHarness({ ...DEFAULT_OPTIONS })
 }
 
 {
+  // 分割章をひらいた状態のホーム（#1… が章の下にぶら下がる）。
+  inspect("ホーム（章をひらく）", new HomeScene("yodaka-2"), makeHarness({ ...DEFAULT_OPTIONS }).ctx);
+  const labels = rec.texts.map((t) => t.text);
+  check("ひらいた章に #1 が出る", labels.some((t) => t.startsWith("#1")));
+  check("ひらいた章に #3 が出る", labels.some((t) => t.startsWith("#3")));
+  check("章の見出しに #  は付かない", labels.some((t) => t.includes("よだかの星") && !t.includes("#")));
+}
+
+{
+  // 小見出しがいちばん長い章をひらいても、問題数の列にぶつからないこと。
+  inspect("ホーム（長い小見出し）", new HomeScene("eiketsu-1"), makeHarness({ ...DEFAULT_OPTIONS }).ctx);
+}
+
+{
   // 記録が詰まった状態（全章クリア・バッジ多数）で溢れないか。
   const h = makeHarness({ ...DEFAULT_OPTIONS });
   const save = (h.ctx.state as { save: Record<string, unknown> }).save;

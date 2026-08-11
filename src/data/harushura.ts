@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『春と修羅（序）』（詩集『春と修羅』1924／宮沢賢治・パブリックドメイン・青空文庫）。
 // 「心象スケツチ」を宣言する序詩。原文の歴史的仮名遣いを保持する。
@@ -49,3 +50,24 @@ export const HARUSHURA: Story = {
     { id: 29, text: "第四次延長のなかで主張されます", kana: "だいよじえんちょうのなかでしゅちょうされます" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの HARUSHURA_PARTS（stories.ts が参照）。
+export const HARUSHURA_PARTS: Story[] = splitStory(HARUSHURA, [
+  {
+    from: 1,
+    to: 10,
+    label: "ひとつの青い照明",
+  },
+  {
+    from: 11,
+    to: 18,
+    label: "心象スケツチ",
+  },
+  {
+    from: 19,
+    to: 29,
+    label: "第四次延長",
+    noMissBadge: "青い照明",
+  },
+]);

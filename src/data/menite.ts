@@ -1,4 +1,5 @@
 import type { Story } from "./story";
+import { splitStory } from "./split";
 
 // 『眼にて云ふ』（詩集『疾中』所収／宮沢賢治・パブリックドメイン）。
 // 底本は青空文庫『疾中』。喀血の床から見た空を詠んだ一篇で、全文を収録する。
@@ -45,3 +46,24 @@ export const MENITE: Story = {
     { id: 27, text: "すきとほった風ばかりです。", kana: "すきとほったかぜばかりです" },
   ],
 };
+
+// 1章を通しで打つには長いため、意味の切れ目で 10問前後に分けて並べる。
+// 本文・読みは原本のまま。一覧に出るのはこの MENITE_PARTS（stories.ts が参照）。
+export const MENITE_PARTS: Story[] = splitStory(MENITE, [
+  {
+    from: 1,
+    to: 10,
+    label: "きれいな風",
+  },
+  {
+    from: 11,
+    to: 17,
+    label: "黒いフロックコート",
+  },
+  {
+    from: 18,
+    to: 27,
+    label: "すきとほった風ばかり",
+    noMissBadge: "すきとほった風",
+  },
+]);

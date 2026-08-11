@@ -1,0 +1,410 @@
+/*
+  読み物ページ共通スタイル。
+  ゲーム本編と地続きに見せるため、色だけでなく「造形の文法」を合わせる。
+
+  【この文書の禁止事項】ドット絵に存在しないものは使わない。
+    ・角丸（border-radius）      → すべて直角
+    ・ぼかし影（box-shadow の blur）→ ずらすだけのハード影
+    ・opacity による淡色         → 色そのものを差し替える
+    ・グラデーション             → 市松のディザ
+    ・半端な行送り（1.9 など）    → px 固定で 8 の倍数
+  文字サイズは 16px を基準に、その倍数だけを使う。DotGothic16 は 16px のとき
+  1ドット＝1px になる設計（unitsPerEm 1000 ÷ 16 = 62.5）で、半端な値だと滲む。
+
+  public/ 配下なのでビルドを通さず dist へコピーされる。
+*/
+
+/* DotGothic16（SIL Open Font License 1.1）。使う文字だけに絞った自前配信。
+   再生成は npm run build:font。ライセンス全文は fonts/OFL.txt。 */
+@font-face {
+  font-family: "DotGothic16";
+  src: url("fonts/DotGothic16-subset.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  --bg: #05070d;
+  --panel: #0b0f1a;
+  --line: #22304a;
+  --text: #cdd7f0;
+  --dim: #6f7f9c;
+  --accent: #9fc7ff;
+  --invert: #05070d;
+
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s6: 48px;
+  --s8: 64px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  /* 夜空。ゲーム本編の星と同じ密度・同じ色で、1px の点だけを敷く。 */
+  background-image: radial-gradient(1px 1px at 20px 30px, #9fc7ff, transparent),
+    radial-gradient(1px 1px at 90px 74px, #6f7f9c, transparent),
+    radial-gradient(1px 1px at 154px 22px, #cdd7f0, transparent),
+    radial-gradient(1px 1px at 198px 122px, #6f7f9c, transparent),
+    radial-gradient(1px 1px at 58px 138px, #9fc7ff, transparent);
+  background-size: 240px 160px;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: "DotGothic16", "MS Gothic", "Osaka-Mono", monospace;
+  font-size: 16px;
+  line-height: 32px;
+}
+
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--s2);
+}
+
+/* ---- 上下の帯（ゲームのトップバー／ボトムバーに対応） ---- */
+
+.site-header {
+  background: var(--panel);
+  border-bottom: 2px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.site-header .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--s2);
+  padding-top: var(--s1);
+  padding-bottom: var(--s1);
+}
+
+.back-link {
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s2);
+}
+
+.site-nav a {
+  color: var(--dim);
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible,
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  outline: none;
+}
+
+/* リンクのフォーカス枠。ブラウザ標準の丸い枠を、角ばった枠へ置き換える。
+   （消すのではなく置き換える。キーボードだけで辿れることは維持する） */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- 本文 ---- */
+
+main {
+  padding: var(--s6) 0 var(--s8);
+}
+
+h1 {
+  font-size: 32px;
+  line-height: 48px;
+  font-weight: normal;
+  margin: 0 0 var(--s2);
+  color: #ffffff;
+  letter-spacing: 0.08em;
+}
+
+.lead {
+  color: var(--dim);
+  margin: 0 0 var(--s6);
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 40px;
+  font-weight: normal;
+  margin: var(--s6) 0 var(--s2);
+  padding-bottom: var(--s2);
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  /* ドット罫線。実線ではなく 4px おきの点で引く。 */
+  background-image: repeating-linear-gradient(to right, var(--line) 0 4px, transparent 4px 8px);
+  background-position: bottom left;
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+}
+
+h3 {
+  font-size: 16px;
+  line-height: 32px;
+  font-weight: normal;
+  margin: var(--s4) 0 var(--s1);
+  color: #ffffff;
+}
+
+h3::before {
+  content: "▚ ";
+  color: var(--line);
+}
+
+p,
+li {
+  margin: 0 0 var(--s3);
+}
+
+ul,
+ol {
+  padding-left: var(--s3);
+}
+
+li {
+  margin-bottom: var(--s1);
+}
+
+a {
+  color: var(--accent);
+}
+
+strong {
+  color: #ffffff;
+  font-weight: normal;
+  /* ドット絵のフォントには太字がないので、下線の点で強調する。 */
+  background-image: repeating-linear-gradient(to right, var(--accent) 0 2px, transparent 2px 6px);
+  background-position: bottom left;
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+  padding-bottom: 2px;
+}
+
+code,
+kbd {
+  font-family: inherit;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: 0 var(--s1);
+  color: #ffffff;
+}
+
+/* ---- 表（ゲームの「きろく」画面と同じ見え方） ---- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--s3);
+  border: 2px solid var(--line);
+}
+
+th,
+td {
+  border: 2px solid var(--line);
+  padding: var(--s1) var(--s2);
+  text-align: left;
+  vertical-align: top;
+  line-height: 32px;
+}
+
+th {
+  background: var(--accent);
+  color: var(--invert);
+  font-weight: normal;
+  /* 「かな」が「か / な」と折れるのを防ぐ。表の見出しは短いので折る必要がない。 */
+  white-space: nowrap;
+}
+
+td {
+  background: var(--panel);
+}
+
+blockquote {
+  margin: 0 0 var(--s3);
+  padding: 0 0 0 var(--s2);
+  border-left: 4px solid var(--line);
+  color: var(--dim);
+}
+
+/* ---- 部品 ---- */
+
+.dot-btn {
+  display: inline-block;
+  margin: var(--s1) 0 var(--s3);
+  padding: var(--s2) var(--s3);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  /* ぼかさない。ずらすだけの影。 */
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.dot-btn::before {
+  content: "▶ ";
+  visibility: hidden;
+}
+
+.dot-btn:hover,
+.dot-btn:focus-visible {
+  background: var(--accent);
+  color: var(--invert);
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.dot-btn:hover::before,
+.dot-btn:focus-visible::before {
+  visibility: visible;
+}
+
+.note {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: var(--s2);
+  margin: 0 0 var(--s3);
+}
+
+.note > :last-child {
+  margin-bottom: 0;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s2);
+  margin: 0 0 var(--s3);
+  padding: 0;
+  list-style: none;
+}
+
+.cards li {
+  margin: 0;
+  padding: var(--s2);
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.cards a {
+  text-decoration: none;
+}
+
+.cards a::before {
+  content: "▶ ";
+}
+
+.cards p {
+  margin: var(--s1) 0 0;
+  color: var(--dim);
+}
+
+/* ---- フッタ ---- */
+
+.site-footer {
+  background: var(--panel);
+  border-top: 2px solid var(--line);
+  padding: var(--s3) 0 var(--s4);
+  color: var(--dim);
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.site-footer a {
+  color: var(--dim);
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: var(--accent);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ---- 節の現在位置（↑↓ で送ったときに光る） ---- */
+
+h2.is-current {
+  color: #ffffff;
+}
+
+h2.is-current::before {
+  content: "▶ ";
+  color: var(--accent);
+}
+
+/* ---- 画面遷移のワイプ。補間せず、8段階で落とす ---- */
+
+#wipe {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9;
+  pointer-events: none;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+body.is-leaving #wipe {
+  animation: wipe-down 240ms steps(8, end) forwards;
+}
+
+@keyframes wipe-down {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-leaving #wipe {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 24px;
+    line-height: 40px;
+  }
+  h2 {
+    font-size: 16px;
+    line-height: 32px;
+  }
+  main {
+    padding: var(--s4) 0 var(--s6);
+  }
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>プレイ画面プレビュー</title>
+    <style>
+      body {
+        margin: 0;
+        background: #05070d;
+        color: #cdd7f0;
+        font-family: sans-serif;
+      }
+      figure {
+        margin: 0 0 4px;
+      }
+      figcaption {
+        font-size: 12px;
+        padding: 2px 4px;
+        color: #8b9ab8;
+      }
+      canvas {
+        image-rendering: pixelated;
+        display: block;
+        width: 960px;
+        height: 540px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="out"></div>
+    <script type="module" src="./preview.ts"></script>
+  </body>
+</html>

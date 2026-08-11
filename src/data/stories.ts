@@ -1,25 +1,25 @@
 import type { Story } from "./story";
-import { YODAKA } from "./yodaka";
-import { BUDORI } from "./budori";
-import { ZASHIKI } from "./zashiki";
-import { OTSUBERU } from "./otsuberu";
-import { GINGA } from "./ginga";
+import { YODAKA_PARTS } from "./yodaka";
+import { BUDORI_PARTS } from "./budori";
+import { ZASHIKI_PARTS } from "./zashiki";
+import { OTSUBERU_PARTS } from "./otsuberu";
+import { GINGA_PARTS } from "./ginga";
 import { ONO_KAZE, ONO_MIZU, ONO_IKIMONO, ONO_KOKORO } from "./onomatope";
-import { AOMORI } from "./aomori";
-import { EIKETSU } from "./eiketsu";
-import { AMENIMO } from "./amenimo";
-import { HARUSHURA } from "./harushura";
+import { AOMORI_PARTS } from "./aomori";
+import { EIKETSU_PARTS } from "./eiketsu";
+import { AMENIMO_PARTS } from "./amenimo";
+import { HARUSHURA_PARTS } from "./harushura";
 import { KOIBYO } from "./koibyo";
 import { KUMOSHINGO } from "./kumoshingo";
-import { MENITE } from "./menite";
-import { HARUGA } from "./haruga";
+import { MENITE_PARTS } from "./menite";
+import { HARUGA_PARTS } from "./haruga";
 import { MUSEI } from "./musei";
 import { NEMURAU } from "./nemurau";
-import { KAZEOMOTE } from "./kazeomote";
-import { KOKUBETSU } from "./kokubetsu";
-import { SEITO } from "./seito";
+import { KAZEOMOTE_PARTS } from "./kazeomote";
+import { KOKUBETSU_PARTS } from "./kokubetsu";
+import { SEITO_PARTS } from "./seito";
 import { YORU } from "./yoru";
-import { MIZUKUMI } from "./mizukumi";
+import { MIZUKUMI_PARTS } from "./mizukumi";
 
 // 「編（エディション）」で章をまとめる。
 // 物語編＝童話、詩歌編＝詩、特別編＝言葉あそび（オノマトペ）。
@@ -35,16 +35,21 @@ export const EDITIONS: Edition[] = [
     key: "story",
     label: "物語編",
     subtitle: "賢治の童話をたどる",
-    stories: [YODAKA, BUDORI, ZASHIKI, OTSUBERU, GINGA],
+    // 長い章は splitStory() で #1／#2… に分割して並べる（12問以下の短い章はそのまま）。
+    stories: [
+      ...YODAKA_PARTS, ...BUDORI_PARTS, ...ZASHIKI_PARTS,
+      ...OTSUBERU_PARTS, ...GINGA_PARTS,
+    ],
   },
   {
     key: "poem",
     label: "詩歌編",
     subtitle: "賢治の詩をうつ",
     stories: [
-      EIKETSU, AMENIMO, HARUSHURA, AOMORI,
-      KOIBYO, KUMOSHINGO, MENITE, HARUGA, MUSEI, NEMURAU, KAZEOMOTE,
-      KOKUBETSU, SEITO, YORU, MIZUKUMI,
+      ...EIKETSU_PARTS, ...AMENIMO_PARTS, ...HARUSHURA_PARTS, ...AOMORI_PARTS,
+      KOIBYO, KUMOSHINGO, ...MENITE_PARTS, ...HARUGA_PARTS, MUSEI, NEMURAU,
+      ...KAZEOMOTE_PARTS, ...KOKUBETSU_PARTS, ...SEITO_PARTS, YORU,
+      ...MIZUKUMI_PARTS,
     ],
   },
   {

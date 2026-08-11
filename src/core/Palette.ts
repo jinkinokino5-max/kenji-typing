@@ -128,9 +128,11 @@ export const SEITO_P: Palette = {
 };
 
 // 詩歌編『夜』灯火ひとつの病室。ほぼ黒から燭台の琥珀へ。
+// shade 2 は文字色に使うため、もとの #6b3a2c（暗い赤茶）では暗い背景に埋もれた。
+// 実測で唯一、暗幕を濃くしても直らない章だったので、灯りに寄せて明度を上げてある。
 export const YORU_P: Palette = {
   name: "yoru",
-  shades: ["#120a0c", "#301818", "#6b3a2c", "#e8b26a"],
+  shades: ["#120a0c", "#301818", "#b07a52", "#e8b26a"],
 };
 
 // 詩歌編『水汲み』川面の水。深い水底の青緑から水しぶきの白へ。
@@ -138,6 +140,28 @@ export const MIZUKUMI_P: Palette = {
   name: "mizukumi",
   shades: ["#08222a", "#1c4a52", "#4f96a0", "#e8fbf4"],
 };
+
+/**
+ * 2色の中間色。t=0 で a、t=1 で b。
+ *
+ * 4階調だけだと「明るすぎず、背景に溶けもしない」中間の文字色が作れない。
+ * 打ち終えた文字のように “存在は見えるが目立たない” 色をここで作る。
+ */
+export function mix(a: string, b: string, t: number): string {
+  const hex = (c: string) => {
+    const h = c.replace("#", "");
+    return [
+      parseInt(h.slice(0, 2), 16),
+      parseInt(h.slice(2, 4), 16),
+      parseInt(h.slice(4, 6), 16),
+    ];
+  };
+  const [r1, g1, b1] = hex(a);
+  const [r2, g2, b2] = hex(b);
+  const k = Math.max(0, Math.min(1, t));
+  const to2 = (v: number) => Math.round(v).toString(16).padStart(2, "0");
+  return `#${to2(r1 + (r2 - r1) * k)}${to2(g1 + (g2 - g1) * k)}${to2(b1 + (b2 - b1) * k)}`;
+}
 
 /** shade index(0-3) を色文字列へ。範囲外はクランプ。 */
 export function shade(p: Palette, i: number): string {
