@@ -44,9 +44,35 @@ export const ZASHIKI_P: Palette = {
 };
 
 // 特別章『オノマトペの野原』真昼の草原。青緑の空から生成りの光へ。
+// 4章を1テーマで共有していた頃のパレット。章別テーマへ移行した現在は未使用だが、
+// 共有テーマ（ONO_THEME）ごと残してある。
 export const ONO_P: Palette = {
   name: "onomatope",
   shades: ["#123a4a", "#2f7a6a", "#6fc0a0", "#f0f6d8"],
+};
+
+// 特別編『風とそらの声』又三郎の荒天。雷雲の紺から風の白へ。
+export const ONO_KAZE_P: Palette = {
+  name: "ono-kaze",
+  shades: ["#101c2e", "#26405e", "#6d92b4", "#eef4ff"],
+};
+
+// 特別編『水とひかりの声』やまなしの谷。水底の藍からひかりの白へ。
+export const ONO_MIZU_P: Palette = {
+  name: "ono-mizu",
+  shades: ["#04141e", "#0f3c4a", "#3f92a4", "#e6fbff"],
+};
+
+// 特別編『けものたちの声』雪の野の月あかり。藍鼠から雪の白へ。
+export const ONO_IKIMONO_P: Palette = {
+  name: "ono-ikimono",
+  shades: ["#141020", "#332c46", "#7d7392", "#f4f0ff"],
+};
+
+// 特別編『こころの声』灯火ひとつの室内。焦茶の闇から灯りの白へ。
+export const ONO_KOKORO_P: Palette = {
+  name: "ono-kokoro",
+  shades: ["#1a0f12", "#3e2028", "#94596a", "#ffeef0"],
 };
 
 // 詩歌編『永訣の朝』夜明け前のみぞれ。寒色から白へ。

@@ -2,7 +2,8 @@ import { VIRTUAL_H, VIRTUAL_W } from "../../core/Renderer";
 import {
   NIGHT, GALAXY, VOLCANO, PASTURE, ZASHIKI_P, ONO_P, SLEET, RAIN, LAMP, AQUA,
   KOIBYO_P, SHINGO_P, MENITE_P, HARUGA_P, MUSEI_P, NEMURAU_P, KAZE_P,
-  KOKUBETSU_P, SEITO_P, YORU_P, MIZUKUMI_P, shade,
+  KOKUBETSU_P, SEITO_P, YORU_P, MIZUKUMI_P,
+  ONO_KAZE_P, ONO_MIZU_P, ONO_IKIMONO_P, ONO_KOKORO_P, shade,
 } from "../../core/Palette";
 import type { SceneTheme } from "./SceneTheme";
 import { baseStoryKey } from "../../data/split";
@@ -12,6 +13,10 @@ import { BudoriBackdrop } from "../anim/BudoriBackdrop";
 import { OtsuberuBackdrop } from "../anim/OtsuberuBackdrop";
 import { ZashikiBackdrop } from "../anim/ZashikiBackdrop";
 import { OnomatopoeiaBackdrop } from "../anim/OnomatopoeiaBackdrop";
+import { OnoKazeBackdrop } from "../anim/OnoKazeBackdrop";
+import { OnoMizuBackdrop } from "../anim/OnoMizuBackdrop";
+import { OnoIkimonoBackdrop } from "../anim/OnoIkimonoBackdrop";
+import { OnoKokoroBackdrop } from "../anim/OnoKokoroBackdrop";
 import { EiketsuBackdrop } from "../anim/EiketsuBackdrop";
 import { AmenimoBackdrop } from "../anim/AmenimoBackdrop";
 import { HarushuraBackdrop } from "../anim/HarushuraBackdrop";
@@ -153,6 +158,7 @@ export const ZASHIKI_THEME: SceneTheme = {
 };
 
 // 特別章『オノマトペの野原』— 風に舞い上がる木の葉
+// 4章を1テーマで共有していた頃の定義。章別テーマへ移行した現在は未使用だが、残してある。
 export const ONO_THEME: SceneTheme = {
   key: "onomatope",
   palette: ONO_P,
@@ -177,6 +183,106 @@ export const ONO_THEME: SceneTheme = {
     }
     g.fillStyle = shade(ONO_P, 3);
     g.fillRect(MX + wob, y, 1, 1);
+  },
+};
+
+// ── 特別編『オノマトペ』（章別テーマ）──
+// メーターも章ごとに主役を変える。何が進んでいるのかが一目でわかるようにする。
+
+// 音の一『風とそらの声』— 吹き上がる木の実
+export const ONO_KAZE_THEME: SceneTheme = {
+  key: "ono_kaze",
+  palette: ONO_KAZE_P,
+  accent: "#ffe27a",
+  bgmKey: "ono_kaze",
+  makeBackdrop: () => new OnoKazeBackdrop(),
+  drawMeter(g, progress, t) {
+    const y = meterY(progress);
+    g.fillStyle = shade(ONO_KAZE_P, 1);
+    g.fillRect(MX, MTOP, 1, MBOTTOM - MTOP);
+    // 通り過ぎた風の道
+    g.fillStyle = shade(ONO_KAZE_P, 2);
+    for (let yy = y; yy < MBOTTOM; yy += 3) g.fillRect(MX, yy, 1, 1);
+    // 吹き上がる木の実（回るので縦横が入れ替わる）
+    const wob = Math.round(Math.sin(t * 4) * 2);
+    g.fillStyle = "#ffe27a";
+    if (Math.sin(t * 7) > 0) g.fillRect(MX - 1 + wob, y, 3, 1);
+    else g.fillRect(MX + wob, y - 1, 1, 3);
+  },
+};
+
+// 音の二『水とひかりの声』— 水面へのぼる泡
+export const ONO_MIZU_THEME: SceneTheme = {
+  key: "ono_mizu",
+  palette: ONO_MIZU_P,
+  accent: "#ffe9a0",
+  bgmKey: "ono_mizu",
+  makeBackdrop: () => new OnoMizuBackdrop(),
+  drawMeter(g, progress, t) {
+    const y = meterY(progress);
+    g.fillStyle = shade(ONO_MIZU_P, 1);
+    g.fillRect(MX, MTOP, 1, MBOTTOM - MTOP);
+    // すでにのぼった泡の跡
+    g.fillStyle = shade(ONO_MIZU_P, 2);
+    for (let yy = y; yy < MBOTTOM; yy += 4) g.fillRect(MX, yy, 1, 1);
+    // 先頭の泡（ゆらぎながらのぼる）
+    const wob = Math.round(Math.sin(t * 3) * 1);
+    g.fillStyle = shade(ONO_MIZU_P, 3);
+    g.fillRect(MX + wob, y - 1, 2, 2);
+    // 目指す先＝水面
+    g.fillStyle = "#ffe9a0";
+    g.fillRect(MX - 1, MTOP - 3, 3, 1);
+  },
+};
+
+// 音の三『けものたちの声』— 雪に増えていく足あと
+export const ONO_IKIMONO_THEME: SceneTheme = {
+  key: "ono_ikimono",
+  palette: ONO_IKIMONO_P,
+  accent: "#ffd2a0",
+  bgmKey: "ono_ikimono",
+  makeBackdrop: () => new OnoIkimonoBackdrop(),
+  drawMeter(g, progress, t) {
+    const y = meterY(progress);
+    g.fillStyle = shade(ONO_IKIMONO_P, 1);
+    g.fillRect(MX, MTOP, 1, MBOTTOM - MTOP);
+    // 歩いてきた足あと（左右に振れる）
+    g.fillStyle = shade(ONO_IKIMONO_P, 2);
+    for (let yy = y; yy < MBOTTOM; yy += 5) {
+      g.fillRect(MX + ((yy % 10 === 0) ? -1 : 1), yy, 1, 1);
+    }
+    // 先頭のけもの（足を交互に出す）
+    const step = Math.sin(t * 8) > 0 ? 1 : -1;
+    g.fillStyle = "#ffd2a0";
+    g.fillRect(MX - 1, y, 3, 2);
+    g.fillRect(MX - 1 + (step > 0 ? 0 : 2), y + 2, 1, 1);
+  },
+};
+
+// 音の四『こころの声』— 脈打つ灯り
+export const ONO_KOKORO_THEME: SceneTheme = {
+  key: "ono_kokoro",
+  palette: ONO_KOKORO_P,
+  accent: "#ffb3b3",
+  bgmKey: "ono_kokoro",
+  makeBackdrop: () => new OnoKokoroBackdrop(),
+  drawMeter(g, progress, t) {
+    const y = meterY(progress);
+    g.fillStyle = shade(ONO_KOKORO_P, 1);
+    g.fillRect(MX, MTOP, 1, MBOTTOM - MTOP);
+    // 灯りが通ったあとの残り火
+    g.fillStyle = shade(ONO_KOKORO_P, 2);
+    for (let yy = y; yy < MBOTTOM; yy += 3) g.fillRect(MX, yy, 1, 1);
+    // 鼓動する灯り。ドッ・ドッの二連打で大きさが変わる。
+    const phase = (t * 1.1) % 1;
+    const beat = phase < 0.12 ? 1 : phase < 0.26 ? 0 : phase < 0.36 ? 0.6 : 0;
+    g.fillStyle = "#ffb3b3";
+    g.fillRect(MX - 1, y - 1, 3, 3);
+    if (beat > 0.5) {
+      g.fillStyle = shade(ONO_KOKORO_P, 3);
+      g.fillRect(MX - 2, y, 5, 1);
+      g.fillRect(MX, y - 2, 1, 5);
+    }
   },
 };
 
@@ -571,11 +677,13 @@ const REGISTRY: Record<string, SceneTheme> = {
   budori: BUDORI_THEME,
   zashiki: ZASHIKI_THEME,
   otsuberu: OTSUBERU_THEME,
-  // 特別編（オノマトペ）— ジャンル別の4章で同じテーマを共有する。
-  ono_kaze: ONO_THEME,
-  ono_mizu: ONO_THEME,
-  ono_ikimono: ONO_THEME,
-  ono_kokoro: ONO_THEME,
+  // 特別編（オノマトペ）— ジャンル別の4章に、それぞれ専用の背景・パレット・BGM。
+  ono_kaze: ONO_KAZE_THEME,
+  ono_mizu: ONO_MIZU_THEME,
+  ono_ikimono: ONO_IKIMONO_THEME,
+  ono_kokoro: ONO_KOKORO_THEME,
+  // 旧・共通テーマ（章別化する前の姿）。参照は外したが残してある。
+  onomatope: ONO_THEME,
   // 詩歌編（専用テーマ）
   eiketsu: EIKETSU_THEME,
   amenimo: AMENIMO_THEME,
