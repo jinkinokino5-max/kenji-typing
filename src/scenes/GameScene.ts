@@ -70,6 +70,7 @@ export class GameScene implements Scene {
   private t = 0;
 
   private sumScore = 0;
+  private parScore = 0;
   private totalMistakes = 0;
   private perfectQuestions = 0;
   private correctQuestions = 0;
@@ -214,6 +215,7 @@ export class GameScene implements Scene {
       elapsedSec: this.qStart,
     });
     this.sumScore += s.score;
+    this.parScore += this.engine.kanaLength * 10;
     this.speedMults.push(s.speedMult);
     this.totalMistakes += this.engine.mistakes;
     for (const [k, v] of this.engine.missByKey) {
@@ -248,6 +250,7 @@ export class GameScene implements Scene {
       perfectQuestions: this.perfectQuestions,
       totalMistakes: this.totalMistakes,
       avgSpeedMult: avgSpeed,
+      parScore: this.parScore,
     });
     const accuracy = Math.round((this.correctQuestions / this.story.questions.length) * 100);
 

@@ -11,6 +11,7 @@ export class AudioEngine {
   private bgmStep = 0;
   private nextNoteTime = 0;
   private track: BgmTrack | null = null;
+  private lastMissAt = -1;
   private intensity = 0; // コンボ強度 0..1（音量/きらめきに反映）
 
   /** ユーザー操作後に呼ぶ（自動再生ポリシー対策）。 */
@@ -60,26 +61,6 @@ export class AudioEngine {
     osc.stop(t0 + dur + 0.02);
   }
 
-  private noise(dur: number, vol = 0.2, when = 0): void {
-    if (!this.ctx || !this.master || this.muted) return;
-    const t0 = this.ctx.currentTime + when;
-    const len = Math.floor(this.ctx.sampleRate * dur);
-    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    const g = this.ctx.createGain();
-    g.gain.value = vol;
-    const lp = this.ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 900;
-    src.connect(lp);
-    lp.connect(g);
-    g.connect(this.master);
-    src.start(t0);
-  }
-
   // ---- SE ----
   key(): void {
     this.tone(660, 0.04, "square", 0, 0.12);
@@ -88,9 +69,24 @@ export class AudioEngine {
     this.tone(880, 0.08, "square", 0, 0.2);
     this.tone(1320, 0.1, "square", 0.06, 0.18);
   }
+  /** ミス音：不快にならないよう、柔らかい低めのサイン波を短く 1 音（連打しても重ならないよう間引く）。 */
   miss(): void {
-    this.tone(180, 0.18, "sawtooth", 0, 0.2, 90);
-    this.noise(0.35, 0.18); // 風のような擦過音
+    if (!this.ctx || !this.master || this.muted) return;
+    const t0 = this.ctx.currentTime;
+    if (t0 - this.lastMissAt < 0.12) return;
+    this.lastMissAt = t0;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(330, t0);
+    osc.frequency.exponentialRampToValueAtTime(247, t0 + 0.14);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.09, t0 + 0.015); // クリックノイズを避ける立ち上がり
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.16);
+    osc.connect(g);
+    g.connect(this.master);
+    osc.start(t0);
+    osc.stop(t0 + 0.18);
   }
   clear(): void {
     const seq = [523, 659, 784, 1047];
